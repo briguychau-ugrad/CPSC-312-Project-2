@@ -80,9 +80,9 @@ To tell the program of someone else's suggestion, use the following:
 		      player-proved is the player who disproved the suggestion.
 
 Before asking if it's possible to make an accusation, you MUST update the
-database by using update, and using the semicolon key to wait until update is
-finished executing on all three branches. Alternatively, to update ONLY one of
-the three branches, run: updateweapon, updatesuspect, or updateroom.
+database by using update. (Note that update returns true by default.)
+Alternatively, to update ONLY one of the three branches, run: updateweapon,
+updatesuspect, or updateroom.
 
 To ask if it's possible to make an accusation, use: accusation(R,S,W). This will
 return false if no no accusation can be made, or the accusation that you should

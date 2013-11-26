@@ -56,6 +56,10 @@ teststart :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(
 
 testend :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),addcard(mrswhite,knife),addcard(mrswhite,candlestick),addcard(mrswhite,conservatory),addcard(mrswhite,diningroom),addcard(mrswhite,library),addcard(mrswhite,mrspeacock),addcard(missscarlet,wrench),addcard(missscarlet,leadpipe),addcard(missscarlet,study),addcard(missscarlet,lounge),addcard(missscarlet,missscarlet),addcard(missscarlet,mrswhite),start.
 
+testalmostend :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),addcard(mrswhite,knife),addcard(mrswhite,candlestick),addcard(mrswhite,conservatory),addcard(mrswhite,diningroom),addcard(mrswhite,library),addcard(mrswhite,mrspeacock),addcard(missscarlet,wrench),addcard(missscarlet,leadpipe),addcard(missscarlet,study),addcard(missscarlet,lounge),addcard(missscarlet,missscarlet),start.
+/* need colonelmustard false. use mysuggestfalse(hall, colonelmustard, rope). */
+/* need mrswhite true. use mysuggesttrue(hall, mrswhite, rope, missscarlet, mrswhite). */
+
 /* General predicates */
 card(X) :- weapon(X).
 card(X) :- room(X).
@@ -88,14 +92,14 @@ printorder(N) :- totalplayers(X),X<N,!,me(A),write('My character: '),write_ln(A)
 printorder(N) :- totalplayers(X),B is X + 1,B>N,Q is N + 1,!,playerorder(A,N),!,write(N),write(' - '),write_ln(A),!,printorder(Q).
 
 /* I made a suggestion, and nobody proved me wrong */
-mysuggestfalse(R,S,W) :- room(R),suspect(S),weapon(W),!,me(M),!,haveorassert(M,R),haveorassert(M,S),haveorassert(M,W).
+mysuggestfalse(R,S,W) :- room(R),suspect(S),weapon(W),!,me(M),!,haveorassert(M,R),haveorassert(M,S),haveorassert(M,W),!.
 
 /* I made a suggestion, and somebody proved me wrong */
 /*A is where I am.
 C is where the other player is.
 B is what I want to check.
 D is total players*/
-mysuggesttrue(R,S,W,P,K) :- room(R),suspect(S),weapon(W),!,me(M),playerorder(M,A),playerorder(P,C),!,totalplayers(D),B is 1 + A mod D,recursesuggest(R,S,W,B,C,K).
+mysuggesttrue(R,S,W,P,K) :- room(R),suspect(S),weapon(W),!,me(M),playerorder(M,A),playerorder(P,C),!,totalplayers(D),B is 1 + A mod D,recursesuggest(R,S,W,B,C,K),!.
 
 recursesuggest(K,S,W,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,S),doesnthave(P,W),totalplayers(D),A is 1 + B mod D,recursesuggest(K,S,W,A,C,K).
 recursesuggest(R,K,W,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,R),doesnthave(P,W),totalplayers(D),A is 1 + B mod D,recursesuggest(R,K,W,A,C,K).
@@ -103,23 +107,23 @@ recursesuggest(R,S,K,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,R),doesnthave
 recursesuggest(_,_,_,B,C,K) :- B=:=C,playerorder(P,C),assert(hascard(P,K)).
 
 /* Someone else made a suggested, and nobody proved them wrong */
-othersuggestfalse(R,S,W,P) :- 
+/*othersuggestfalse(R,S,W,P) :- */
 
 /* Given a card, checks either the given player has the card, or asserts that it's the correct accusation */
 haveorassert(P,C) :- hascard(P,C).
 haveorassert(P,C) :- not(hascard(P,C)),assert(accuse(C)).
 
 /* Give an accusation */
-accusation(R,S,W) :- accuse(R),room(R),accuse(S),suspect(S),accuse(W),weapon(W),!.
+accusation(R,S,W) :- update,accuse(R),room(R),accuse(S),suspect(S),accuse(W),weapon(W),!.
 
 /* Print all known facts */
 printallknown :- hascard(P,C),write(P),write(' has '),write_ln(C).
 printallknown :- nocard(P,C),write(P),write(' doesn\'t have '),write_ln(C).
 
 /* Updates all accusations */
-update :- updateroom.
-update :- updatesuspect.
-update :- updateweapon.
+update :- ignore(updateroom),ignore(updatesuspect),ignore(updateweapon),true,!.
+/*update :- updatesuspect.
+update :- updateweapon.*/
 
 updateroom :- room(R),accuse(R),!.
 updateroom :- room(R),findall(X,nocard(X,R),Z),totalplayers(N),length(Z,N),!,assert(accuse(R)),!.
