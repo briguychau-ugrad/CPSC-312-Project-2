@@ -84,6 +84,9 @@ addcard(P,C) :- not(nocard(_,C)),not(hascard(_,C)),player(P),!,assert(hascard(P,
 doesnthave(_,C) :- hascard(_,C),!.
 doesnthave(P,C) :- not(hascard(_,C)),not(nocard(P,C)),assert(nocard(P,C)),!.
 
+/* May have card: either he has it or it's the solution */
+mighthave(_,C) :- 
+
 start :- me(_),currplayer(N),totalplayers(M),N=:=M,retract(currplayer(_)),assert(currplayer(1)).
 
 /* Display order of turns */
@@ -107,7 +110,7 @@ recursesuggest(R,S,K,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,R),doesnthave
 recursesuggest(_,_,_,B,C,K) :- B=:=C,playerorder(P,C),assert(hascard(P,K)).
 
 /* Someone else made a suggested, and nobody proved them wrong */
-/*othersuggestfalse(R,S,W,P) :- */
+othersuggestfalse(R,S,W,P) :- 
 
 /* Given a card, checks either the given player has the card, or asserts that it's the correct accusation */
 haveorassert(P,C) :- hascard(P,C).
@@ -122,8 +125,6 @@ printallknown :- nocard(P,C),write(P),write(' doesn\'t have '),write_ln(C).
 
 /* Updates all accusations */
 update :- ignore(updateroom),ignore(updatesuspect),ignore(updateweapon),true,!.
-/*update :- updatesuspect.
-update :- updateweapon.*/
 
 updateroom :- room(R),accuse(R),!.
 updateroom :- room(R),findall(X,nocard(X,R),Z),totalplayers(N),length(Z,N),!,assert(accuse(R)),!.
