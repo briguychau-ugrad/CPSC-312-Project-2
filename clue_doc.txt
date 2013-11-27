@@ -75,9 +75,11 @@ To tell the program of someone else's suggestion, use the following:
 		othersuggestfalse(room, suspect, weapon, player).
 	-if somebody proved that their suggestion is false:
 		othersuggestfalse(room, suspect, weapon, player-suggested,
-							card, player-proved).
+							 player-proved).
 		Note: player-suggested is the player who made the suggestion;
 		      player-proved is the player who disproved the suggestion.
+		Note: if you were the player who disproved the suggestion,
+		      use the name of your player (eg mrgreen).
 
 Before asking if it's possible to make an accusation, you MUST update the
 database by using update. (Note that update returns true by default.)

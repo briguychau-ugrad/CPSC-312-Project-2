@@ -7,7 +7,7 @@
  *
  */
  
-:- dynamic currplayer/1, hascard/2, nocard/2, playerorder/2, totalplayers/1, me/1, accuse/1.
+:- dynamic currplayer/1, hascard/2, nocard/2, maybecard/2, playerorder/2, totalplayers/1, me/1, accuse/1.
 
 /* Define all the weapons */
 weapon(knife).
@@ -57,8 +57,10 @@ teststart :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(
 testend :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),addcard(mrswhite,knife),addcard(mrswhite,candlestick),addcard(mrswhite,conservatory),addcard(mrswhite,diningroom),addcard(mrswhite,library),addcard(mrswhite,mrspeacock),addcard(missscarlet,wrench),addcard(missscarlet,leadpipe),addcard(missscarlet,study),addcard(missscarlet,lounge),addcard(missscarlet,missscarlet),addcard(missscarlet,mrswhite),start.
 
 testalmostend :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),addcard(mrswhite,knife),addcard(mrswhite,candlestick),addcard(mrswhite,conservatory),addcard(mrswhite,diningroom),addcard(mrswhite,library),addcard(mrswhite,mrspeacock),addcard(missscarlet,wrench),addcard(missscarlet,leadpipe),addcard(missscarlet,study),addcard(missscarlet,lounge),addcard(missscarlet,missscarlet),start.
+/* WANT Solution = mrswhite, billiardroom, revolver. */
 /* need colonelmustard false. use mysuggestfalse(hall, colonelmustard, rope). */
 /* need mrswhite true. use mysuggesttrue(hall, mrswhite, rope, missscarlet, mrswhite). */
+/* need mrswhite true. use othersuggestfalse(study, mrswhite, wrench, missscarlet) then othersuggestfalse(library, mrswhite, knife, mrswhite). */
 
 /* General predicates */
 card(X) :- weapon(X).
@@ -77,15 +79,22 @@ addplayer(X) :- player(X),!,not(playerorder(X,_)),!,currplayer(N),totalplayers(Z
 myplayer(X) :- playerorder(X,_),not(me(_)),assert(me(X)).
 
 /* Adding a card */
+/* hascard/2 is the statement that a player has a given card */
 addcard(P,C) :- nocard(Q,C),not(Q=P),retract(nocard(Q,C)),!,addcard(P,C).
 addcard(P,C) :- not(nocard(_,C)),not(hascard(_,C)),player(P),!,assert(hascard(P,C)).
 
 /* Doesn't have a card */
+/* nocard/2 is the statement that a player doesn't have a given card */
 doesnthave(_,C) :- hascard(_,C),!.
 doesnthave(P,C) :- not(hascard(_,C)),not(nocard(P,C)),assert(nocard(P,C)),!.
 
 /* May have card: either he has it or it's the solution */
-mighthave(_,C) :- 
+/* maybecard/2 is the statement that a player has a card, or its the soln */
+mighthave(P,C) :- maybecard(P,C),!.
+mighthave(P,C) :- hascard(P,C),!.
+mighthave(P,C) :- maybecard(Q,C),not(P=Q),retract(maybecard(Q,C)),assert(accuse(C)),!.
+mighthave(P,C) :- nocard(P,C),retract(nocard(P,C)),assert(accuse(C)),!.
+mighthave(P,C) :- assert(maybecard(P,C)),!.
 
 start :- me(_),currplayer(N),totalplayers(M),N=:=M,retract(currplayer(_)),assert(currplayer(1)).
 
@@ -98,19 +107,43 @@ printorder(N) :- totalplayers(X),B is X + 1,B>N,Q is N + 1,!,playerorder(A,N),!,
 mysuggestfalse(R,S,W) :- room(R),suspect(S),weapon(W),!,me(M),!,haveorassert(M,R),haveorassert(M,S),haveorassert(M,W),!.
 
 /* I made a suggestion, and somebody proved me wrong */
-/*A is where I am.
+/*
+A is where I am.
 C is where the other player is.
 B is what I want to check.
-D is total players*/
+D is total players
+*/
 mysuggesttrue(R,S,W,P,K) :- room(R),suspect(S),weapon(W),!,me(M),playerorder(M,A),playerorder(P,C),!,totalplayers(D),B is 1 + A mod D,recursesuggest(R,S,W,B,C,K),!.
 
-recursesuggest(K,S,W,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,S),doesnthave(P,W),totalplayers(D),A is 1 + B mod D,recursesuggest(K,S,W,A,C,K).
-recursesuggest(R,K,W,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,R),doesnthave(P,W),totalplayers(D),A is 1 + B mod D,recursesuggest(R,K,W,A,C,K).
-recursesuggest(R,S,K,B,C,K) :- B=\=C,playerorder(P,B),doesnthave(P,R),doesnthave(P,S),totalplayers(D),A is 1 + B mod D,recursesuggest(R,S,K,A,C,K).
-recursesuggest(_,_,_,B,C,K) :- B=:=C,playerorder(P,C),assert(hascard(P,K)).
+/*
+We check current position A
+B is where we check next
+*/
+recursesuggest(K,S,W,A,C,K) :- A=\=C,playerorder(P,A),doesnthave(P,S),doesnthave(P,W),totalplayers(D),B is 1 + A mod D,recursesuggest(K,S,W,B,C,K).
+recursesuggest(R,K,W,A,C,K) :- A=\=C,playerorder(P,A),doesnthave(P,R),doesnthave(P,W),totalplayers(D),B is 1 + A mod D,recursesuggest(R,K,W,B,C,K).
+recursesuggest(R,S,K,A,C,K) :- A=\=C,playerorder(P,A),doesnthave(P,R),doesnthave(P,S),totalplayers(D),B is 1 + A mod D,recursesuggest(R,S,K,B,C,K).
+recursesuggest(_,_,_,A,C,K) :- A=:=C,playerorder(P,C),assert(hascard(P,K)).
 
 /* Someone else made a suggested, and nobody proved them wrong */
-othersuggestfalse(R,S,W,P) :- 
+othersuggestfalse(R,S,W,P) :- room(R),suspect(S),weapon(W),!,playerorder(P,_),!,mighthave(P,R),mighthave(P,S),mighthave(P,W),!.
+
+/* Someone else made a suggestion, and someone (NOT ME) proved them right */
+/*
+A is where PS - playersuggested is
+C is where PP - playerproved is
+B is what I want to check
+D is total players
+*/
+othersuggesttrue(R,S,W,PS,PP) :- room(R),suspect(S),weapon(W),!,playerorder(PS,A),playerorder(PP,C),!,totalplayers(D),B is 1 + A mod D,recursesuggestother(R,S,W,B,C).
+
+/*
+We check current position A
+B is where we check next
+*/
+recursesuggestother(R,S,W,A,C) :- A=\=C,playerorder(M,A),me(M),!,totalplayers(D),B is 1 + A mod D,recursesuggestother(R,S,W,B,C).
+recursesuggestother(R,S,W,A,C) :- A=\=C,playerorder(P,A),doesnthave(P,R),doesnthave(P,S),doesnthave(P,W),totalplayers(D),B is 1 + A mod D,recursesuggestother(P,S,W,B,C).
+recursesuggestother(R,S,W,A,C) :- A=:=C,playerorder(M,A),me(M),!.
+/* TODO Finish this function thing */
 
 /* Given a card, checks either the given player has the card, or asserts that it's the correct accusation */
 haveorassert(P,C) :- hascard(P,C).
@@ -144,12 +177,3 @@ filterout([X|XS],Y,[X|ZS]) :- not(X=Y),hascard(_,X),filterout(XS,Y,ZS).
 
 allhas([]).
 allhas([X|XS]) :- hascard(_,X),allhas(XS).
-
-
-
-
-
-
-
-
-
