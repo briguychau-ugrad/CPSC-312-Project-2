@@ -92,30 +92,37 @@ numplayers(N) :- N>2,N<7,!,retract(totalplayers(_)),assert(totalplayers(N)).
 
 /* Adding a card */
 /* hascard/2 is the statement that a player has a given card */
+addcard(P,C) :- maybecard(Q,C),not(Q=P),false,!.
+addcard(P,C) :- maybecard(P,C),retract(maybecard(P,C)),!,addcard(P,C).
 addcard(P,C) :- nocard(Q,C),not(Q=P),retract(nocard(Q,C)),!,addcard(P,C).
-addcard(P,C) :- not(nocard(_,C)),not(hascard(_,C)),player(P),!,assert(hascard(P,C)).
+addcard(P,C) :- oneofcard(P,L),member(C,L),retract(oneofcard(P,L)),!,addcard(P,C).
+addcard(P,C) :- oneofcard(Q,L),member(C,L),not(P=Q),select(C,L,N),retract(oneofcard(Q,L)),hasoneof(Q,N),!,addcard(P,C).
+addcard(P,C) :- not(nocard(_,C)),not(hascard(_,C)),not(oneofcard(_,L)),member(C,L),player(P),assert(hascard(P,C)),!.
 
 /* Doesn't have a card */
 /* nocard/2 is the statement that a player doesn't have a given card */
 doesnthave(_,C) :- hascard(_,C),!.
+doesnthave(P,C) :- maybecard(P,C),retract(maybecard(P,C)),assert(accuse(C)),!.
+doesnthave(P,C) :- oneofcard(P,L),member(C,L),select(C,L,N),retract(oneofcard(P,L)),hasoneof(P,N),!,doesnthave(P,C).
 doesnthave(P,C) :- not(hascard(_,C)),not(nocard(P,C)),assert(nocard(P,C)),!.
 
 /* May have card: either he has it or it's the solution */
 /* maybecard/2 is the statement that a player has a card, or its the soln */
 mighthave(P,C) :- maybecard(P,C),!.
 mighthave(P,C) :- hascard(P,C),!.
+mighthave(P,C) :- oneofcard(Q,L),member(C,L),select(C,L,N),retract(oneofcard(Q,L)),hasoneof(Q,N),!,mighthave(P,C).
 mighthave(P,C) :- maybecard(Q,C),not(P=Q),retract(maybecard(Q,C)),assert(accuse(C)),!.
 mighthave(P,C) :- nocard(P,C),retract(nocard(P,C)),assert(accuse(C)),!.
 mighthave(P,C) :- assert(maybecard(P,C)),!.
 
 /* Has One Of: The given player definitely has one of the following cards. */
 /* oneofcard/2 is the statement that a player definitely has one of the cards in the list. */
-hasoneof(P,L) :- findall(X,ofchelper1(P,X,L),A),ofchelper2(P,A).
+hasoneof(P,L) :- findall(X,hoohelper1(X,L),A),ofchelper(P,A).
 
-ofchelper1(P,X,L) :- member(X,L),not(hascard(_,X)).
+hoohelper1(X,L) :- member(X,L),not(hascard(_,X)),not(maybecard(_,X)).
 
-ofchelper2(P,[X]) :- addcard(P,X),!.
-ofchelper2(P,L) :- length(L,N),N=\=1,!,assert(oneofcard(P,L)),!.
+ofchelper(P,[X]) :- addcard(P,X),!.
+ofchelper(P,L) :- length(L,N),N=\=1,!,assert(oneofcard(P,L)),!.
 
 start :- currplayer(0),retract(currplayer(0)),assert(currplayer(1)).
 
@@ -158,7 +165,7 @@ B is where we check next
 */
 recursesuggestother(R,S,W,A,C) :- A=\=C,playerorder(M,A),me(M),!,totalplayers(D),B is 1 + A mod D,recursesuggestother(R,S,W,B,C).
 recursesuggestother(R,S,W,A,C) :- A=\=C,playerorder(P,A),doesnthave(P,R),doesnthave(P,S),doesnthave(P,W),totalplayers(D),B is 1 + A mod D,recursesuggestother(P,S,W,B,C).
-recursesuggestother(R,S,W,A,C) :- A=:=C,playerorder(M,A),me(M),!.
+recursesuggestother(_,_,_,A,C) :- A=:=C,playerorder(M,A),me(M),!.
 recursesuggestother(R,S,W,A,C) :- A=:=C,playerorder(P,A),sort([R,S,W],X),hasoneof(P,X).
 /* TODO Finish this function thing */
 
@@ -172,6 +179,8 @@ accusation(R,S,W) :- update,accuse(R),room(R),accuse(S),suspect(S),accuse(W),wea
 /* Print all known facts */
 printallknown :- hascard(P,C),write(P),write(' has '),write_ln(C).
 printallknown :- nocard(P,C),write(P),write(' doesn\'t have '),write_ln(C).
+printallknown :- oneofcard(P,L),write(P),write(' must have one of '),write_ln(L).
+printallknown :- maybecard(P,C),write(P),write(' either has '),write(C),write_ln(' or it is accused.').
 
 /* Updates all accusations */
 update :- ignore(updateroom),ignore(updatesuspect),ignore(updateweapon),true,!.
