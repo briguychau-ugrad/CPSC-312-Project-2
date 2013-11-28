@@ -76,7 +76,7 @@ teststart :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),ad
 testend :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),addcard(player3,knife),addcard(player3,candlestick),addcard(player3,conservatory),addcard(player3,diningroom),addcard(player3,library),addcard(player3,mrspeacock),addcard(player2,wrench),addcard(player2,leadpipe),addcard(player2,study),addcard(player2,lounge),addcard(player2,missscarlet),addcard(player2,mrswhite),start.
 
 testalmostend :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),addcard(player3,knife),addcard(player3,candlestick),addcard(player3,conservatory),addcard(player3,diningroom),addcard(player3,library),addcard(player3,mrspeacock),addcard(player2,wrench),addcard(player2,leadpipe),addcard(player2,study),addcard(player2,lounge),addcard(player2,missscarlet),start.
-/* WANT Solution = colonelmustard, billiardroom, revolver. */
+/* WANT Solution = billiardroom, colonelmustard, revolver. */
 /* need colonelmustard false. use mysuggestfalse(hall, colonelmustard, rope). */
 /* need mrswhite true. use mysuggesttrue(hall, mrswhite, rope, player2, mrswhite). */
 /* need mrswhite true. use othersuggestfalse(study, colonelmustard, wrench, player2) then othersuggestfalse(library, colonelmustard, knife, player3). */
@@ -121,6 +121,7 @@ hasoneof(P,L) :- findall(X,hoohelper1(X,L),A),ofchelper(P,A).
 
 hoohelper1(X,L) :- member(X,L),not(hascard(_,X)),not(maybecard(_,X)).
 
+ofchelper(_,[]) :- !.
 ofchelper(P,[X]) :- addcard(P,X),!.
 ofchelper(P,L) :- length(L,N),N=\=1,!,assert(oneofcard(P,L)),!.
 
@@ -175,6 +176,29 @@ haveorassert(P,C) :- not(hascard(P,C)),assert(accuse(C)).
 
 /* Give an accusation */
 accusation(R,S,W) :- update,accuse(R),room(R),accuse(S),suspect(S),accuse(W),weapon(W),!.
+
+/* Give a suggestion */
+suggestion(R,S,W) :- update,findall(X,accuse(X),L),length(L,3),write_ln('make accusation instead'),!,accusation(R,S,W).
+suggestion(R,S,W) :- update,findall(X,accuse(X),L),length(L,2),suggestion2(R,S,W),!.
+suggestion(R,S,W) :- update,findall(X,accuse(X),L),length(L,1),suggestion1(R,S,W),!.
+suggestion(R,S,W) :- update,findall(X,accuse(X),L),length(L,0),room(R),not(hascard(_,R)),suspect(S),not(hascard(_,S)),weapon(W),not(hascard(_,W)),!.
+
+suggestion2(R,S,W) :- room(RX),accuse(RX),suspect(SX),accuse(SX),!,suggestionhelperR(R,1),suggestionhelperS(S,1),weapon(W),not(hascard(_,W)),!.
+suggestion2(R,S,W) :- room(RX),accuse(RX),weapon(WX),accuse(WX),!,suggestionhelperR(R,1),suggestionhelperW(W,1),suspect(S),not(hascard(_,S)),!.
+suggestion2(R,S,W) :- suspect(SX),accuse(SX),weapon(WX),accuse(WX),!,suggestionhelperS(S,1),suggestionhelperW(W,1),room(R),not(hascard(_,R)),!.
+
+suggestion1(R,S,W) :- room(RX),accuse(RX),!,suggestionhelperR(R,1),suspect(S),not(hascard(_,S)),weapon(W),not(hascard(_,W)),!.
+suggestion1(R,S,W) :- suspect(SX),accuse(SX),!,suggestionhelperS(S,1),room(R),not(hascard(_,R)),weapon(W),not(hascard(_,W)),!.
+suggestion1(R,S,W) :- weapon(WX),accuse(WX),!,suggestionhelperW(W,1),room(R),not(hascard(_,R)),suspect(S),not(hascard(_,S)),!.
+
+suggestionhelperR(R,O) :- playerorder(P,O),hascard(P,R),room(R),!.
+suggestionhelperR(R,O) :- playerorder(P,O),room(R),not(hascard(P,R)),!,totalplayers(N),M is N - 2,A is (O + M) mod N + 1,!,suggestionhelperR(R,A).
+
+suggestionhelperS(S,O) :- playerorder(P,O),hascard(P,S),suspect(S),!.
+suggestionhelperS(S,O) :- playerorder(P,O),suspect(S),not(hascard(P,S)),!,totalplayers(N),M is N - 2,A is (O + M) mod N + 1,!,suggestionhelperS(S,A).
+
+suggestionhelperW(W,O) :- playerorder(P,O),hascard(P,W),weapon(W),!.
+suggestionhelperW(W,O) :- playerorder(P,O),weapon(W),not(hascard(P,W)),!,totalplayers(N),M is N - 2,A is (O + M) mod N + 1,!,suggestionhelperW(W,A).
 
 /* Print all known facts */
 printallknown :- hascard(P,C),write(P),write(' has '),write_ln(C).

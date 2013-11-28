@@ -35,20 +35,26 @@ program will not recognize the names.
 
 - Starting the game - you must do these steps in order.
 
+First, open up the program in swipl:
+	$ swipl -s clue.pl
+
 You must specify the number of players in the game before starting. To do so,
-use: numplayers(n). The players will be player1 ... playern. YOU ARE ALWAYS
+use:
+	?- numplayers(n).
+		Example:
+			?- numplayers(4).
+The players will be player1 ... playern. YOU ARE ALWAYS
 player1. As with the game, players will be listed clockwise.
-Example:
-	numplayers(4).
 
 Afterwards, you can add all the cards which you own. To add a card, use:
-addcard(name,card).
-Example:
-	addcard(player1,wrench).
-	addcard(player2,mrgreen).
+	?- addcard(player,card).
+		Example:
+			?- addcard(player1,wrench).
+			?- addcard(player2,mrgreen).
 
 To tell the program that the game has been set up and that the game has started,
-use: start.
+use:
+	?- start.
 
 Now, the program knows that the game has begun!
 
@@ -56,33 +62,37 @@ Now, the program knows that the game has begun!
 
 To tell the program of your own suggestion, use the following:
 	-if nobody proved that your suggestion is false:
-		mysuggestfalse(room, suspect, weapon).
+		?- mysuggestfalse(room, suspect, weapon).
 	-if somebody proved that your suggestion is false:
-		mysuggestiontrue(room, suspect, weapon, player, card).
+		?- mysuggestiontrue(room, suspect, weapon, player, card).
 
 To tell the program of someone else's suggestion, use the following:
 	-if nobody proved that their suggestion is false:
-		othersuggestfalse(room, suspect, weapon, player).
+		?- othersuggestfalse(room, suspect, weapon, player).
 	-if somebody proved that their suggestion is true:
-		othersuggesttrue(room, suspect, weapon, player-suggested,
+		?- othersuggesttrue(room, suspect, weapon, player-suggested,
 							 player-proved).
 		Note: player-suggested is the player who made the suggestion;
 		      player-proved is the player who disproved the suggestion.
 		Note: if you were the player who disproved the suggestion,
 		      use the name of your player (i.e. player1).
 
-Before asking if it's possible to make an accusation, you MUST update the
-database by using update. (Note that update returns true by default.)
-Alternatively, to update ONLY one of the three branches, run: updateweapon,
-updatesuspect, or updateroom.
+To ask for a suggestion, use:
+	?- suggestion(R,S,W).
+If the program is able to generate an accusation, it will inform you of that
+instead of a suggestion.
 
-To ask if it's possible to make an accusation, use: accusation(R,S,W). This will
-return false if no no accusation can be made, or the accusation that you should
-make: R is the room, S is the suspect, W is the weapon. Alternatively, you can
-ask for a list of all the absolute accusations that the program knows of. Use:
-accuse(X).
+To ask if it's possible to make an accusation, use:
+	?- accusation(R,S,W).
+This will return false if no no accusation can be made, or the accusation that
+you should make: R is the room, S is the suspect, W is the weapon.
 
-To view the contents of the database, use: printallknown.
+You can also ask for a list of all the absolute accusations that the program
+currently knows of. Use:
+	?- accuse(X).
+
+To view the contents of the database, use:
+	?- printallknown.
 
 
 
