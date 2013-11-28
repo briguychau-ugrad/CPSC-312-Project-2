@@ -71,11 +71,15 @@ totalplayers(0).
 	professorplum
 	rope
 */
+
+/* TESTING CODE COMMENTED OUT
+
 teststart :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),start.
 
 testend :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),addcard(player3,knife),addcard(player3,candlestick),addcard(player3,conservatory),addcard(player3,diningroom),addcard(player3,library),addcard(player3,mrspeacock),addcard(player2,wrench),addcard(player2,leadpipe),addcard(player2,study),addcard(player2,lounge),addcard(player2,missscarlet),addcard(player2,mrswhite),start.
 
 testalmostend :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),addcard(player3,knife),addcard(player3,candlestick),addcard(player3,conservatory),addcard(player3,diningroom),addcard(player3,library),addcard(player3,mrspeacock),addcard(player2,wrench),addcard(player2,leadpipe),addcard(player2,study),addcard(player2,lounge),addcard(player2,missscarlet),start.
+*/
 /* WANT Solution = billiardroom, colonelmustard, revolver. */
 /* need colonelmustard false. use mysuggestfalse(hall, colonelmustard, rope). */
 /* need mrswhite true. use mysuggesttrue(hall, mrswhite, rope, player2, mrswhite). */

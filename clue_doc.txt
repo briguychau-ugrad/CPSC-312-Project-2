@@ -94,9 +94,4 @@ currently knows of. Use:
 To view the contents of the database, use:
 	?- printallknown.
 
-
-
-
-
-
-
+-- END --
