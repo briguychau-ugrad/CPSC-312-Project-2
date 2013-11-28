@@ -7,7 +7,7 @@
  *
  */
  
-:- dynamic currplayer/1, hascard/2, nocard/2, maybecard/2, playerorder/2, totalplayers/1, me/1, accuse/1.
+:- dynamic hascard/2, currplayer/1, nocard/2, maybecard/2, oneofcard/2, totalplayers/1, me/1, accuse/1.
 
 /* Define all the weapons */
 weapon(knife).
@@ -36,7 +36,26 @@ suspect(mrgreen).
 suspect(mrswhite).
 suspect(mrspeacock).
 
-/* Keeping track of turns */
+/* A player is numbered 1-6. */
+player(player1).
+player(player2).
+player(player3).
+player(player4).
+player(player5).
+player(player6).
+
+/* Playerorder keeps track of the order of players */
+playerorder(player1,1).
+playerorder(player2,2).
+playerorder(player3,3).
+playerorder(player4,4).
+playerorder(player5,5).
+playerorder(player6,6).
+
+/* Keeps track of "me" */
+me(player1).
+
+/* Keeping track of turns; 0 implies not started */
 currplayer(0).
 
 /* Dummy predicates 
@@ -52,31 +71,24 @@ totalplayers(0).
 	professorplum
 	rope
 */
-teststart :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),start.
+teststart :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),start.
 
-testend :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),addcard(mrswhite,knife),addcard(mrswhite,candlestick),addcard(mrswhite,conservatory),addcard(mrswhite,diningroom),addcard(mrswhite,library),addcard(mrswhite,mrspeacock),addcard(missscarlet,wrench),addcard(missscarlet,leadpipe),addcard(missscarlet,study),addcard(missscarlet,lounge),addcard(missscarlet,missscarlet),addcard(missscarlet,mrswhite),start.
+testend :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),addcard(player3,knife),addcard(player3,candlestick),addcard(player3,conservatory),addcard(player3,diningroom),addcard(player3,library),addcard(player3,mrspeacock),addcard(player2,wrench),addcard(player2,leadpipe),addcard(player2,study),addcard(player2,lounge),addcard(player2,missscarlet),addcard(player2,mrswhite),start.
 
-testalmostend :- numplayers(3),addplayer(missscarlet),addplayer(mrswhite),addplayer(mrgreen),myplayer(mrgreen),addcard(mrgreen,kitchen),addcard(mrgreen,ballroom),addcard(mrgreen,hall),addcard(mrgreen,mrgreen),addcard(mrgreen,professorplum),addcard(mrgreen,rope),addcard(mrswhite,knife),addcard(mrswhite,candlestick),addcard(mrswhite,conservatory),addcard(mrswhite,diningroom),addcard(mrswhite,library),addcard(mrswhite,mrspeacock),addcard(missscarlet,wrench),addcard(missscarlet,leadpipe),addcard(missscarlet,study),addcard(missscarlet,lounge),addcard(missscarlet,missscarlet),start.
-/* WANT Solution = mrswhite, billiardroom, revolver. */
+testalmostend :- numplayers(3),addcard(player1,kitchen),addcard(player1,ballroom),addcard(player1,hall),addcard(player1,mrgreen),addcard(player1,professorplum),addcard(player1,rope),addcard(player3,knife),addcard(player3,candlestick),addcard(player3,conservatory),addcard(player3,diningroom),addcard(player3,library),addcard(player3,mrspeacock),addcard(player2,wrench),addcard(player2,leadpipe),addcard(player2,study),addcard(player2,lounge),addcard(player2,missscarlet),start.
+/* WANT Solution = colonelmustard, billiardroom, revolver. */
 /* need colonelmustard false. use mysuggestfalse(hall, colonelmustard, rope). */
-/* need mrswhite true. use mysuggesttrue(hall, mrswhite, rope, missscarlet, mrswhite). */
-/* need mrswhite true. use othersuggestfalse(study, mrswhite, wrench, missscarlet) then othersuggestfalse(library, mrswhite, knife, mrswhite). */
+/* need mrswhite true. use mysuggesttrue(hall, mrswhite, rope, player2, mrswhite). */
+/* need mrswhite true. use othersuggestfalse(study, colonelmustard, wrench, player2) then othersuggestfalse(library, colonelmustard, knife, player3). */
+/* need mrswhite true. use othersuggesttrue(hall, mrswhite, rope, player2, player3). */
 
 /* General predicates */
 card(X) :- weapon(X).
 card(X) :- room(X).
 card(X) :- suspect(X).
 
-/* A player is also a suspect */
-player(X) :- suspect(X).
-
 /* Specifying number of players */
 numplayers(N) :- N>2,N<7,!,retract(totalplayers(_)),assert(totalplayers(N)).
-
-addplayer(X) :- player(X),!,not(playerorder(X,_)),!,currplayer(N),totalplayers(Z),N<Z,!,Q is N + 1,assert(playerorder(X,Q)),assert(currplayer(Q)),retract(currplayer(N)).
-
-/* Specify which player you are */
-myplayer(X) :- playerorder(X,_),not(me(_)),assert(me(X)).
 
 /* Adding a card */
 /* hascard/2 is the statement that a player has a given card */
@@ -96,12 +108,16 @@ mighthave(P,C) :- maybecard(Q,C),not(P=Q),retract(maybecard(Q,C)),assert(accuse(
 mighthave(P,C) :- nocard(P,C),retract(nocard(P,C)),assert(accuse(C)),!.
 mighthave(P,C) :- assert(maybecard(P,C)),!.
 
-start :- me(_),currplayer(N),totalplayers(M),N=:=M,retract(currplayer(_)),assert(currplayer(1)).
+/* Has One Of: The given player definitely has one of the following cards. */
+/* oneofcard/2 is the statement that a player definitely has one of the cards in the list. */
+hasoneof(P,L) :- findall(X,ofchelper1(P,X,L),A),ofchelper2(P,A).
 
-/* Display order of turns */
-displayorder :- printorder(1).
-printorder(N) :- totalplayers(X),X<N,!,me(A),write('My character: '),write_ln(A),!.
-printorder(N) :- totalplayers(X),B is X + 1,B>N,Q is N + 1,!,playerorder(A,N),!,write(N),write(' - '),write_ln(A),!,printorder(Q).
+ofchelper1(P,X,L) :- member(X,L),not(hascard(_,X)).
+
+ofchelper2(P,L) :- L=[X],addcard(P,X),!.
+ofchelper2(P,L) :- length(L,N),N=\=1,!,assert(oneofcard(P,L)),!.
+
+start :- currplayer(0),retract(currplayer(0)),assert(currplayer(1)).
 
 /* I made a suggestion, and nobody proved me wrong */
 mysuggestfalse(R,S,W) :- room(R),suspect(S),weapon(W),!,me(M),!,haveorassert(M,R),haveorassert(M,S),haveorassert(M,W),!.
@@ -134,7 +150,7 @@ C is where PP - playerproved is
 B is what I want to check
 D is total players
 */
-othersuggesttrue(R,S,W,PS,PP) :- room(R),suspect(S),weapon(W),!,playerorder(PS,A),playerorder(PP,C),!,totalplayers(D),B is 1 + A mod D,recursesuggestother(R,S,W,B,C).
+othersuggesttrue(R,S,W,PS,PP) :- room(R),suspect(S),weapon(W),!,playerorder(PS,A),playerorder(PP,C),!,totalplayers(D),B is 1 + A mod D,recursesuggestother(R,S,W,B,C),!.
 
 /*
 We check current position A
@@ -143,6 +159,7 @@ B is where we check next
 recursesuggestother(R,S,W,A,C) :- A=\=C,playerorder(M,A),me(M),!,totalplayers(D),B is 1 + A mod D,recursesuggestother(R,S,W,B,C).
 recursesuggestother(R,S,W,A,C) :- A=\=C,playerorder(P,A),doesnthave(P,R),doesnthave(P,S),doesnthave(P,W),totalplayers(D),B is 1 + A mod D,recursesuggestother(P,S,W,B,C).
 recursesuggestother(R,S,W,A,C) :- A=:=C,playerorder(M,A),me(M),!.
+recursesuggestother(R,S,W,A,C) :- A=:=C,playerorder(P,A),sort([R,S,W],X),hasoneof(P,X).
 /* TODO Finish this function thing */
 
 /* Given a card, checks either the given player has the card, or asserts that it's the correct accusation */

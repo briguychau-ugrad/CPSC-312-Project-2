@@ -36,24 +36,16 @@ program will not recognize the names.
 - Starting the game - you must do these steps in order.
 
 You must specify the number of players in the game before starting. To do so,
-use: numplayers(n).
+use: numplayers(n). The players will be player1 ... playern. YOU ARE ALWAYS
+player1. As with the game, players will be listed clockwise.
 Example:
 	numplayers(4).
-
-You MUST add players in the order that they are seated. To add a player, use:
-addplayer(name).
-Example:
-	addplayer(mrgreen).
-
-Now you must specify which player you are. To do that, use: myplayer(name).
-Example:
-	myplayer(mrgreen).
 
 Afterwards, you can add all the cards which you own. To add a card, use:
 addcard(name,card).
 Example:
-	addcard(mrgreen,wrench).
-	addcard(mrgreen,mrgreen).
+	addcard(player1,wrench).
+	addcard(player2,mrgreen).
 
 To tell the program that the game has been set up and that the game has started,
 use: start.
@@ -61,8 +53,6 @@ use: start.
 Now, the program knows that the game has begun!
 
 - During the game
-
-To check the order of the turns, use the following command: displayorder.
 
 To tell the program of your own suggestion, use the following:
 	-if nobody proved that your suggestion is false:
@@ -73,13 +63,13 @@ To tell the program of your own suggestion, use the following:
 To tell the program of someone else's suggestion, use the following:
 	-if nobody proved that their suggestion is false:
 		othersuggestfalse(room, suspect, weapon, player).
-	-if somebody proved that their suggestion is false:
-		othersuggestfalse(room, suspect, weapon, player-suggested,
+	-if somebody proved that their suggestion is true:
+		othersuggesttrue(room, suspect, weapon, player-suggested,
 							 player-proved).
 		Note: player-suggested is the player who made the suggestion;
 		      player-proved is the player who disproved the suggestion.
 		Note: if you were the player who disproved the suggestion,
-		      use the name of your player (eg mrgreen).
+		      use the name of your player (i.e. player1).
 
 Before asking if it's possible to make an accusation, you MUST update the
 database by using update. (Note that update returns true by default.)
