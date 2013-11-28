@@ -114,7 +114,7 @@ hasoneof(P,L) :- findall(X,ofchelper1(P,X,L),A),ofchelper2(P,A).
 
 ofchelper1(P,X,L) :- member(X,L),not(hascard(_,X)).
 
-ofchelper2(P,L) :- L=[X],addcard(P,X),!.
+ofchelper2(P,[X]) :- addcard(P,X),!.
 ofchelper2(P,L) :- length(L,N),N=\=1,!,assert(oneofcard(P,L)),!.
 
 start :- currplayer(0),retract(currplayer(0)),assert(currplayer(1)).
